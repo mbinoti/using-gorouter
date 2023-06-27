@@ -1,35 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+// Navegação aninhada com estado com GoRouter
+
+// Implementação GoRouter com StatefulShellRoute
+
+// Quando a página de detalhes é apresentada, ela é empilhada acima da Tela A,
+// mas as guias na parte inferior (o shell da interface do usuário) permanecem
+// visíveis.
+
+// private key for the root navigator.
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorAKey = GlobalKey<NavigatorState>(debugLabel: 'shellA');
 final _shellNavigatorBKey = GlobalKey<NavigatorState>(debugLabel: 'shellB');
 
+void main() {
+  runApp(const MyApp());
+}
+
 final goRouter = GoRouter(
   initialLocation: '/a',
-  // * Passing a navigatorKey causes an issue on hot reload:
-  // * https://github.com/flutter/flutter/issues/113757#issuecomment-1518421380
-  // * However it's still necessary otherwise the navigator pops back to
-  // * root on hot reload
   navigatorKey: _rootNavigatorKey,
   debugLogDiagnostics: true,
   routes: [
-    // Stateful navigation based on:
-    // https://github.com/flutter/packages/blob/main/packages/go_router/example/lib/stateful_shell_route.dart
+    // define uma lista de ramos.
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
-        return ScaffoldWithNestedNavigation(navigationShell: navigationShell);
+        // the UI shell
+        return ScaffoldWithNestedNavigation(
+          navigationShell: navigationShell,
+        );
       },
       branches: [
+        // first branch (A)
         StatefulShellBranch(
           navigatorKey: _shellNavigatorAKey,
           routes: [
+            // top route inside branch.
             GoRoute(
               path: '/a',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: RootScreen(label: 'A', detailsPath: '/a/details'),
               ),
               routes: [
+                // child route.
                 GoRoute(
                   path: 'details',
                   builder: (context, state) => const DetailsScreen(label: 'A'),
@@ -38,16 +52,18 @@ final goRouter = GoRouter(
             ),
           ],
         ),
+        // second branch (B)
         StatefulShellBranch(
           navigatorKey: _shellNavigatorBKey,
           routes: [
-            // Shopping Cart
+            // top route inside branch.
             GoRoute(
               path: '/b',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: RootScreen(label: 'B', detailsPath: '/b/details'),
               ),
               routes: [
+                // child route.
                 GoRoute(
                   path: 'details',
                   builder: (context, state) => const DetailsScreen(label: 'B'),
@@ -61,10 +77,6 @@ final goRouter = GoRouter(
   ],
 );
 
-void main() {
-  runApp(const MyApp());
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -74,13 +86,12 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       routerConfig: goRouter,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.indigo,
-      ),
+      theme: ThemeData(primarySwatch: Colors.indigo),
     );
   }
 }
 
+// que declara a IU do shell desejada usando umNavigationBar.
 class ScaffoldWithNestedNavigation extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -88,8 +99,10 @@ class ScaffoldWithNestedNavigation extends StatelessWidget {
     Key? key,
     required this.navigationShell,
   }) : super(
-            key: key ?? const ValueKey<String>('ScaffoldWithNestedNavigation'));
+          key: key ?? const ValueKey<String>('ScaffoldWithNestedNavigation'),
+        );
 
+  // a lógica para alternar entre ramificações com o navigationShellobjeto.
   void _goBranch(int index) {
     // Um padrão comum ao usar as barras de navegação inferiores é oferecer suporte
     // navegando para o local inicial ao tocar no item que está
